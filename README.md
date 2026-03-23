@@ -1,129 +1,131 @@
-# API de Autenticacao, Usuarios e Permissoes
+# 📦 API de Autenticação, Usuários e Controle de Acesso (ACL)
 
-API REST em Node.js com Express, Sequelize, JWT e controle basico de acesso por usuarios, roles e permissoes.
+API REST desenvolvida com Node.js para gerenciamento de autenticação, usuários, roles e permissões, implementando controle de acesso baseado em ACL (*Access Control List*).
 
-## Visao Geral
+---
 
-O projeto implementa:
+## 🚀 Sobre o Projeto
 
-- autenticacao com JWT
-- cadastro e manutencao de usuarios
-- cadastro e manutencao de produtos
-- cadastro e manutencao de roles
-- cadastro e manutencao de permissoes
-- associacao de roles e permissoes diretamente a usuarios via ACL
-- associacao de permissoes a roles
+Esta API foi construída com foco em **segurança, organização em camadas e controle de acesso granular**, permitindo:
 
-Stack principal:
+- Autenticação via JWT
+- Gerenciamento completo de usuários
+- Controle de acesso por **roles** e **permissões**
+- Associação direta de permissões a usuários (ACL)
+- Estrutura preparada para evolução em ambientes reais
 
-- Node.js 18.15.0
-- Express 4
-- Sequelize 6
-- SQLite em desenvolvimento
-- PostgreSQL previsto para `test` e `production`
-- JWT com `jsonwebtoken`
-- hash de senha com `bcryptjs`
+---
 
-## Arquitetura
+## 🛠️ Stack Tecnológica
 
-O codigo esta organizado em camadas:
+- **Node.js** 18
+- **Express** 4
+- **Sequelize** 6
+- **SQLite** (desenvolvimento)
+- **PostgreSQL** (test e produção)
+- **JWT (`jsonwebtoken`)**
+- **bcryptjs** (hash de senha)
 
-- `api/index.js`: bootstrap do servidor HTTP
-- `api/routes/`: definicao de endpoints
-- `api/controllers/`: adaptacao HTTP e tratamento de respostas
-- `api/services/`: regras de negocio e acesso aos modelos
-- `api/models/`: modelos Sequelize e associacoes
-- `api/migrations/`: estrutura do banco de dados
-- `api/middleware/`: autenticacao por token JWT
-- `api/config/`: configuracoes de banco e segredo JWT
+---
 
-## Entidades do Dominio
+## 🧱 Arquitetura
 
-### Usuario
+O projeto segue o padrão de separação em camadas:
 
-- `id` UUID
+```
+api/
+  config/        # Configurações (DB, JWT)
+  controllers/   # Camada HTTP (req/res)
+  services/      # Regras de negócio
+  models/        # Models e associações Sequelize
+  migrations/    # Estrutura do banco
+  middleware/    # Autenticação e autorização
+  routes/        # Definição de endpoints
+  index.js       # Bootstrap da aplicação
+```
+
+---
+
+## 🧩 Modelagem do Domínio
+
+### 👤 Usuário
+- `id` (UUID)
 - `nome`
 - `email`
 - `senha`
 
-Observacao: o model possui `defaultScope` para ocultar `senha` nas consultas padrao.
+> ⚠️ A senha é ocultada automaticamente via `defaultScope`.
 
-### Produto
+---
 
-- `id` UUID
+### 📦 Produto
+- `id`
 - `nome`
 - `descricao`
 - `preco`
 
-### Role
+---
 
-- `id` UUID
+### 🛡️ Role
+- `id`
 - `nome`
 - `descricao`
 
-### Permissao
+---
 
-- `id` UUID
+### 🔑 Permissão
+- `id`
 - `nome`
 - `descricao`
 
-### Relacionamentos
+---
 
-- `usuarios` N:N `roles` via `usuarios_roles`
-- `usuarios` N:N `permissoes` via `usuarios_permissoes`
-- `roles` N:N `permissoes` via `roles_permissoes`
+### 🔗 Relacionamentos
 
-## Requisitos
+- Usuários ⇄ Roles (N:N)
+- Usuários ⇄ Permissões (N:N)
+- Roles ⇄ Permissões (N:N)
 
-- Node.js 18.x
-- npm 9+
+---
 
-## Instalacao
+## ⚙️ Instalação e Execução
 
 ```bash
 npm install
-```
-
-## Execucao
-
-```bash
 npm start
 ```
 
-Servidor padrao:
+Servidor:
 
-```text
+```
 http://localhost:3000
 ```
 
-## Banco de Dados
+---
 
-Configuracao atual:
+## 🗄️ Banco de Dados
 
-- `development`: SQLite em `api/database/database.sqlite`
-- `test`: PostgreSQL
-- `production`: PostgreSQL
+| Ambiente     | Banco        |
+|--------------|-------------|
+| development  | SQLite       |
 
-As migrations do projeto estao em `api/migrations/`.
-
-Se quiser recriar o banco a partir das migrations:
+Executar migrations:
 
 ```bash
 npx sequelize-cli db:migrate
 ```
 
-## Autenticacao
+---
 
-O login retorna um `accessToken` JWT.
+## 🔐 Autenticação
 
-Endpoint:
+### Login
 
 ```http
 POST /auth/login
 ```
 
-Payload:
-
+**Request**
 ```json
 {
   "email": "usuario@empresa.com",
@@ -131,234 +133,174 @@ Payload:
 }
 ```
 
-Resposta:
-
+**Response**
 ```json
 {
   "accessToken": "jwt-token"
 }
 ```
 
-Para rotas protegidas, envie o header:
+---
+
+### Uso do Token
 
 ```http
 Authorization: Bearer <token>
 ```
 
-## Endpoints
+---
 
-## Estado Atual de Protecao das Rotas
+## 📡 Endpoints
 
-O projeto nao aplica autenticacao e autorizacao de forma uniforme. Hoje, o comportamento observado no codigo e:
+### 🔑 Auth
 
-| Grupo | Protecao atual | Observacao |
-| --- | --- | --- |
-| `/auth/*` | publica | login disponivel sem token |
-| `/usuarios/*` | JWT obrigatorio | inclusive para criar usuario |
-| `/produto/*` | middleware de role `Fiscal` | depende de `req.usuarioId`, mas o router nao aplica `autenticado` antes |
-| `/role/*` | publica | sem middleware |
-| `/permissao/*` | publica | sem middleware |
-| `/seguranca/*` | publica | `acl` depende de `req.usuarioId`, mas o router nao aplica `autenticado` |
+| Método | Rota | Descrição |
+|------|------|--------|
+| POST | `/auth/login` | Autentica usuário |
 
-### Auth
+---
 
-| Metodo | Rota | Descricao |
-| --- | --- | --- |
-| `POST` | `/auth/login` | Autentica usuario e retorna JWT |
+### 👤 Usuários (🔒 protegidas)
 
-### Usuarios
+| Método | Rota |
+|------|------|
+| POST | `/usuarios` |
+| GET | `/usuarios` |
+| GET | `/usuarios/id/:id` |
+| PUT | `/usuarios/id/:id` |
+| DELETE | `/usuarios/id/:id` |
 
-Rotas com middleware de autenticacao aplicado no router.
+---
 
-| Metodo | Rota | Descricao |
-| --- | --- | --- |
-| `POST` | `/usuarios` | Cadastra usuario |
-| `GET` | `/usuarios` | Lista usuarios |
-| `GET` | `/usuarios/id/:id` | Busca usuario por ID |
-| `PUT` | `/usuarios/id/:id` | Atualiza nome e email |
-| `DELETE` | `/usuarios/id/:id` | Remove usuario |
+### 📦 Produtos (⚠️ restrição por role)
 
-Payload de cadastro:
+| Método | Rota |
+|------|------|
+| POST | `/produto` |
+| GET | `/produto` |
+| GET | `/produto/id/:id` |
+| PUT | `/produto/id/:id` |
+| DELETE | `/produto/id/:id` |
+
+
+---
+
+### 🛡️ Roles
+
+| Método | Rota |
+|------|------|
+| POST | `/role` |
+| GET | `/role` |
+| GET | `/role/:id` |
+| PUT | `/role/:id` |
+| DELETE | `/role/:id` |
+
+---
+
+### 🔑 Permissões
+
+| Método | Rota |
+|------|------|
+| POST | `/permissao` |
+| GET | `/permissao` |
+| GET | `/permissao/:id` |
+| PUT | `/permissao/:id` |
+| DELETE | `/permissao/:id` |
+
+---
+
+### 🔐 Segurança / ACL
+
+#### Atualizar ACL do usuário
+
+```http
+POST /seguranca/acl
+```
 
 ```json
 {
-  "nome": "Maria Silva",
-  "email": "maria@empresa.com",
-  "senha": "123456"
+  "role": ["uuid-role"],
+  "permissao": ["uuid-permissao"]
 }
 ```
 
-### Produtos
+---
 
-Comportamento atual importante:
+#### Vincular permissões a uma role
 
-- o router exige role `Fiscal`
-- o router nao aplica o middleware `autenticado` antes da verificacao de role
-- na pratica, a rota depende de contexto de usuario que nao e inicializado nesse router
-
-| Metodo | Rota | Descricao |
-| --- | --- | --- |
-| `POST` | `/produto` | Cadastra produto |
-| `GET` | `/produto` | Lista produtos |
-| `GET` | `/produto/id/:id` | Busca produto por ID |
-| `PUT` | `/produto/id/:id` | Atualiza produto |
-| `DELETE` | `/produto/id/:id` | Remove produto |
-
-Payload de exemplo:
-
-```json
-{
-  "nome": "Notebook",
-  "descricao": "Notebook corporativo",
-  "preco": 4999.9
-}
+```http
+POST /seguranca/permissaoes-roles
 ```
-
-### Roles
-
-| Metodo | Rota | Descricao |
-| --- | --- | --- |
-| `POST` | `/role` | Cadastra role |
-| `GET` | `/role` | Lista roles |
-| `GET` | `/role/:id` | Busca role por ID |
-| `PUT` | `/role/:id` | Atualiza role |
-| `DELETE` | `/role/:id` | Remove role |
-
-Payload de exemplo:
-
-```json
-{
-  "nome": "admin",
-  "descricao": "Perfil administrativo"
-}
-```
-
-### Permissoes
-
-| Metodo | Rota | Descricao |
-| --- | --- | --- |
-| `POST` | `/permissao` | Cadastra permissao |
-| `GET` | `/permissao` | Lista permissoes |
-| `GET` | `/permissao/:id` | Busca permissao por ID |
-| `PUT` | `/permissao/:id` | Atualiza permissao |
-| `DELETE` | `/permissao/:id` | Remove permissao |
-
-Payload de exemplo:
-
-```json
-{
-  "nome": "produto:criar",
-  "descricao": "Permite criar produtos"
-}
-```
-
-### Seguranca / ACL
-
-| Metodo | Rota | Descricao |
-| --- | --- | --- |
-| `POST` | `/seguranca/acl` | Substitui roles e permissoes do usuario autenticado |
-| `POST` | `/seguranca/permissaoes-roles` | Substitui permissoes vinculadas a uma role |
-
-Payload esperado:
-
-```json
-{
-  "role": [
-    "uuid-role-1",
-    "uuid-role-2"
-  ],
-  "permissao": [
-    "uuid-permissao-1",
-    "uuid-permissao-2"
-  ]
-}
-```
-
-Comportamento atual:
-
-- busca o usuario autenticado a partir de `req.usuarioId`
-- remove todas as roles e permissoes ja associadas ao usuario
-- associa os novos itens enviados no payload
-
-Payload esperado para vinculo `role -> permissoes`:
 
 ```json
 {
   "roleId": "uuid-role",
-  "permissao": [
-    "uuid-permissao-1",
-    "uuid-permissao-2"
-  ]
+  "permissao": ["uuid-permissao"]
 }
 ```
 
-Observacao importante:
+> ⚠️ Endpoint possui inconsistência de nomenclatura (`permissaoes`)
 
-- a rota esta implementada como `/seguranca/permissaoes-roles`
-- o nome possui inconsistencia ortografica e deveria ser padronizado antes de uma publicacao externa da API
+---
 
-## Exemplo de Fluxo de Uso
+## 🔄 Fluxo de Uso
 
-1. Autenticar via `POST /auth/login`
-2. Usar o token JWT nas rotas protegidas
-3. Criar roles e permissoes
-4. Associar roles e permissoes ao usuario em `POST /seguranca/acl`
-5. Consumir os recursos da API
+1. Realizar login
+2. Receber JWT
+3. Criar roles e permissões
+4. Associar ao usuário (ACL)
+5. Consumir recursos protegidos
 
-## Tratamento de Erros
+---
 
-O projeto retorna mensagens simples em JSON ou texto puro, dependendo do controller. Os codigos mais usados sao:
+## ❗ Limitações Atuais
 
-- `200`: operacao realizada com sucesso
-- `201`: recurso criado
-- `400`: erro de validacao ou processamento
-- `401`: autenticacao ausente ou falha de autorizacao
-- `404`: falha de login por usuario nao encontrado
+- ❌ Falta padronização de autenticação entre rotas
+- ❌ Sem validação de payload
+- ❌ JWT secret versionado no código
+- ❌ Sem testes automatizados
+- ❌ Sem documentação Swagger
+- ❌ Inconsistência em nomes de endpoints
+- ❌ Dependência de `req.usuarioId` sem garantir autenticação
 
-## Limitacoes Atuais
+---
 
-- nao existe rota publica para bootstrap do primeiro usuario
-- nao existe validacao formal de payloads
-- o segredo JWT esta versionado em arquivo
-- a protecao por middleware nao esta aplicada de forma uniforme entre os routers
-- a rota de produtos depende de role, mas nao inicializa autenticacao no proprio router
-- o endpoint de seguranca para `acl` depende de `req.usuarioId`, embora o router nao aplique autenticacao
-- existe inconsistencia de nomenclatura em `/seguranca/permissaoes-roles`
-- nao ha suite de testes automatizados
-- nao ha documentacao OpenAPI/Swagger
+## 📈 Melhorias Futuras
 
-## Qualidade Tecnica
+- ✅ Implementar validação (`Joi`, `Zod`)
+- ✅ Padronizar middlewares de auth
+- ✅ Uso de variáveis de ambiente (.env)
+- ✅ Corrigir modelagem de relacionamentos
+- ✅ Criar testes automatizados
+- ✅ Adicionar Swagger/OpenAPI
+- ✅ Corrigir naming (`permissaoes` → `permissoes`)
+- ✅ Criar fluxo de bootstrap de admin
 
-O projeto demonstra uma separacao razoavel entre controllers, services e models, com uso correto de hash de senha e tokens JWT. Ao mesmo tempo, existem pontos estruturais que precisam de evolucao para uso em ambientes mais exigentes.
+---
 
-Uma avaliacao tecnica objetiva, com riscos e recomendacoes atualizados, esta em [docs/AVALIACAO_TECNICA_ATUALIZADA.md](docs/AVALIACAO_TECNICA_ATUALIZADA.md).
+## 🧠 Avaliação Técnica
 
-## Estrutura do Projeto
+O projeto demonstra:
 
-```text
-api/
-  config/
-  controllers/
-  database/
-  migrations/
-  middleware/
-  models/
-  routes/
-  services/
-```
+✔ Boa separação de responsabilidades  
+✔ Uso correto de JWT e hash de senha  
+✔ Modelagem inicial de ACL consistente  
 
-## Melhorias Recomendadas
+Mas ainda precisa evoluir em:
 
-- permitir bootstrap seguro do primeiro usuario administrador
-- mover segredo JWT e configuracoes sensiveis para variaveis de ambiente
-- padronizar middleware de autenticacao e autorizacao em todas as rotas sensiveis
-- aplicar `autenticado` antes de `roles(["Fiscal"])` no router de produtos
-- implementar validacao de entrada com `zod`, `joi` ou `express-validator`
-- corrigir inconsistencias de modelagem nas tabelas de associacao
-- renomear `/seguranca/permissaoes-roles` para uma rota consistente
-- adicionar testes unitarios e de integracao
-- publicar especificacao OpenAPI
+- segurança
+- padronização
+- maturidade de produção
 
-## Autor
+---
 
-- Kennedy Francisco
+## 👨‍💻 Autor
+
+**Kennedy Francisco**
+
+---
+
+## ⭐ Considerações Finais
+
+Esse projeto já está em nível de portfólio intermediário para avançado.  
+Com ajustes em segurança e padronização, pode facilmente atingir nível profissional.
