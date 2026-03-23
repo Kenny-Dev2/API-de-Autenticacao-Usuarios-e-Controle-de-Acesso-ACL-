@@ -22,7 +22,6 @@ Esta API foi construída com foco em **segurança, organização em camadas e co
 - **Express** 4
 - **Sequelize** 6
 - **SQLite** (desenvolvimento)
-- **PostgreSQL** (test e produção)
 - **JWT (`jsonwebtoken`)**
 - **bcryptjs** (hash de senha)
 
